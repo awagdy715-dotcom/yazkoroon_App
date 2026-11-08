@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>يُذكرون - المسبحة الإلكترونية</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Cairo -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #0c0e17;
+            color: #ffffff;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        /* Clean standard digital number font look */
+        .digital-number {
+            font-family: 'Cairo', sans-serif;
+            font-weight: 900;
+            letter-spacing: 4px;
+        }
+        /* Dotted ring animation */
+        @keyframes rotate-ring {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-ring {
+            animation: rotate-ring 25s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-[#0c0e17] text-white min-h-screen flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+
+    <!-- Toast Notification Message Box -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-[#1b1f30] border border-indigo-500/30 text-white px-5 py-3 rounded-2xl shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-3">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-indigo-400"></i>
+        <span id="toast-msg" class="font-semibold text-sm">تم الحفظ بنجاح</span>
+    </div>
+
+    <!-- Top Header Bar -->
+    <header class="w-full px-6 py-5 flex items-center justify-between">
+        <!-- Menu Hamburger Button on the RIGHT -->
+        <button onclick="openMenu()" class="w-10 h-10 flex items-center justify-center text-white focus:outline-none">
+            <i class="fa-solid fa-bars text-2xl"></i>
+        </button>
+
+        <!-- App Logo & Person Praying icon on the LEFT -->
+        <div class="flex items-center gap-3">
+            <!-- Arabic typography -->
+            <span class="text-xl font-black tracking-wider text-white">يُذكرون</span>
+            <!-- Person in tashahhud/supplication posture SVG logo -->
+            <div class="w-9 h-9 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="currentColor" class="w-8 h-8 text-white">
+                    <path d="M12 2a2 2 0 100 4 2 2 0 000-4zM10 8h4a2 2 0 012 2v2h-1.5l-1.5 6h-2l-1.5-6H8v-2a2 2 0 012-2zM4 18h16v2H4z"/>
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-md w-full mx-auto px-6 py-4 flex flex-col justify-between items-center text-center">
+
+        <!-- Top Spacer -->
+        <div class="w-full"></div>
+
+        <!-- Clean Digital Counter Display -->
+        <div class="my-6">
+            <div id="counter-display" class="digital-number text-6xl md:text-7xl text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">
+                0033
+            </div>
+        </div>
+
+        <!-- Dhikr Selector & Display Section with arrows -->
+        <div class="w-full flex items-center justify-between my-4 px-2">
+            <!-- Previous Button -->
+            <button onclick="prevDhikr()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition active:scale-95">
+                <i class="fa-solid fa-chevron-right text-xl"></i>
+            </button>
+
+            <!-- Current Dhikr Text -->
+            <div class="flex-1 px-2">
+                <h2 id="dhikr-text" class="text-3xl font-bold text-white transition-all duration-300">أستغفر الله</h2>
+            </div>
+
+            <!-- Next Button -->
+            <button onclick="nextDhikr()" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition active:scale-95">
+                <i class="fa-solid fa-chevron-left text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Action Control Buttons (Reset, Vibration, Save) -->
+        <div class="w-full grid grid-cols-3 gap-4 my-6">
+            <!-- Reset Button -->
+            <button onclick="resetCounter()" class="flex flex-col items-center justify-center py-2 group">
+                <div class="w-12 h-12 flex items-center justify-center text-white mb-2">
+                    <i class="fa-solid fa-rotate-right text-2xl group-hover:rotate-180 transition duration-500"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">إعادة تعيين</span>
+            </button>
+
+            <!-- Vibration Button -->
+            <button id="vibrate-btn" onclick="toggleVibration()" class="flex flex-col items-center justify-center py-2 group">
+                <div class="w-12 h-12 flex items-center justify-center text-white mb-2">
+                    <i id="vibrate-icon" class="fa-solid fa-wave-square text-2xl"></i>
+                </div>
+                <span id="vibrate-text" class="text-xs text-gray-300 font-medium">اهتزاز</span>
+            </button>
+
+            <!-- Save Button -->
+            <button onclick="saveSession()" class="flex flex-col items-center justify-center py-2 group">
+                <div class="w-12 h-12 flex items-center justify-center text-white mb-2">
+                    <i class="fa-solid fa-bookmark text-2xl"></i>
+                </div>
+                <span class="text-xs text-gray-300 font-medium">حفظ</span>
+            </button>
+        </div>
+
+        <!-- Bottom Circular Click Button with Dotted Outer Ring -->
+        <div class="relative my-6 flex items-center justify-center w-full">
+            <!-- Rotating/Dotted Outer Ring -->
+            <div class="absolute w-48 h-48 rounded-full border border-dashed border-white/40 animate-ring pointer-events-none"></div>
+            
+            <!-- Main Clickable Button -->
+            <button id="main-click-btn" onclick="incrementCounter()" class="w-40 h-40 rounded-full bg-[#e4e7ec] shadow-[0_0_30px_rgba(255,255,255,0.15)] flex flex-col items-center justify-center relative active:scale-95 transition-all duration-150 group">
+                <span class="text-gray-900 font-bold text-lg mb-1">تزودوا</span>
+                <!-- Green progress indicator line -->
+                <div class="w-8 h-1.5 bg-[#4ade80] rounded-full"></div>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Side Menu Drawer (Opens from Right) -->
+    <div id="side-menu" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden transition-opacity duration-300" onclick="closeMenu()">
+        <div class="absolute left-0 top-0 bottom-0 w-85 max-w-full bg-[#121522] border-r border-gray-800 p-6 flex flex-col justify-between shadow-2xl transform -translate-x-full transition-transform duration-300" id="menu-panel" onclick="event.stopPropagation()">
+            <div>
+                <div class="flex items-center justify-between pb-6 border-b border-gray-800">
+                    <button onclick="closeMenu()" class="w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <span class="text-lg font-bold">أذكاري المحفوظة</span>
+                        <div class="w-9 h-9 rounded-xl bg-indigo-600/30 flex items-center justify-center text-indigo-400 font-bold">
+                            <i class="fa-solid fa-bookmark"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Saved Sessions List -->
+                <div class="mt-6 space-y-3 overflow-y-auto max-h-[60vh]" id="saved-sessions-list">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Default Azkar Quick Switch -->
+                <div class="mt-6 pt-4 border-t border-gray-800">
+                    <p class="text-xs text-gray-400 mb-3 text-right">اختر الذكر السريع:</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectDhikrByIndex(0); closeMenu();" class="text-right px-3 py-2 rounded-lg bg-[#1c2033] hover:bg-indigo-600/20 text-xs text-gray-200">أستغفر الله</button>
+                        <button onclick="selectDhikrByIndex(1); closeMenu();" class="text-right px-3 py-2 rounded-lg bg-[#1c2033] hover:bg-indigo-600/20 text-xs text-gray-200">سبحان الله</button>
+                        <button onclick="selectDhikrByIndex(2); closeMenu();" class="text-right px-3 py-2 rounded-lg bg-[#1c2033] hover:bg-indigo-600/20 text-xs text-gray-200">الحمد لله</button>
+                        <button onclick="selectDhikrByIndex(3); closeMenu();" class="text-right px-3 py-2 rounded-lg bg-[#1c2033] hover:bg-indigo-600/20 text-xs text-gray-200">الله أكبر</button>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center text-xs text-gray-500 pt-4 border-t border-gray-800">
+                تطبيق يُذكرون • صدقة جارية
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        const azkarList = [
+            "أستغفر الله",
+            "سبحان الله",
+            "الحمد لله",
+            "الله أكبر",
+            "لا إله إلا الله وحدَهُ لا شريكَ له"
+        ];
+
+        let currentIndex = 0;
+        let count = 33;
+        let vibrationEnabled = true;
+        let savedSessions = [];
+
+        let counterDisplay, dhikrText, vibrateIcon, vibrateText, toast, toastMsg, savedSessionsList;
+
+        window.onload = function() {
+            counterDisplay = document.getElementById('counter-display');
+            dhikrText = document.getElementById('dhikr-text');
+            vibrateIcon = document.getElementById('vibrate-icon');
+            vibrateText = document.getElementById('vibrate-text');
+            toast = document.getElementById('toast');
+            toastMsg = document.getElementById('toast-msg');
+            savedSessionsList = document.getElementById('saved-sessions-list');
+
+            const savedCount = localStorage.getItem('tasbeeh_count');
+            const savedIndex = localStorage.getItem('tasbeeh_index');
+            const storedSessions = localStorage.getItem('tasbeeh_saved_sessions');
+            
+            if (savedCount !== null) count = parseInt(savedCount);
+            if (savedIndex !== null) {
+                currentIndex = parseInt(savedIndex);
+                if(currentIndex >= azkarList.length) currentIndex = 0;
+            }
+            if (storedSessions !== null) {
+                try {
+                    savedSessions = JSON.parse(storedSessions);
+                } catch(e) {
+                    savedSessions = [];
+                }
+            }
+            
+            updateDisplay();
+            renderSavedSessions();
+        };
+
+        window.incrementCounter = function() {
+            count++;
+            
+            if (vibrationEnabled && navigator.vibrate) {
+                navigator.vibrate(40);
+            }
+
+            updateDisplay();
+        };
+
+        function updateDisplay() {
+            if (counterDisplay) counterDisplay.textContent = String(count).padStart(4, '0');
+            if (dhikrText) dhikrText.textContent = azkarList[currentIndex];
+            
+            localStorage.setItem('tasbeeh_count', count);
+            localStorage.setItem('tasbeeh_index', currentIndex);
+        }
+
+        window.nextDhikr = function() {
+            currentIndex = (currentIndex + 1) % azkarList.length;
+            updateDisplay();
+        };
+
+        window.prevDhikr = function() {
+            currentIndex = (currentIndex - 1 + azkarList.length) % azkarList.length;
+            updateDisplay();
+        };
+
+        window.selectDhikrByIndex = function(index) {
+            currentIndex = index;
+            updateDisplay();
+        };
+
+        window.resetCounter = function() {
+            count = 0;
+            updateDisplay();
+            showToast("تم إعادة تعيين العداد");
+        };
+
+        window.toggleVibration = function() {
+            vibrationEnabled = !vibrationEnabled;
+            if (vibrationEnabled) {
+                if (vibrateText) vibrateText.textContent = "اهتزاز";
+                showToast("تم تفعيل الاهتزاز");
+            } else {
+                if (vibrateText) vibrateText.textContent = "معطل";
+                showToast("تم إيقاف الاهتزاز");
+            }
+        };
+
+        window.saveSession = function() {
+            const currentDhikr = azkarList[currentIndex];
+            const sessionData = {
+                dhikr: currentDhikr,
+                count: count,
+                date: new Date().toLocaleDateString('ar-EG', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+            };
+            
+            savedSessions.unshift(sessionData);
+            if(savedSessions.length > 20) savedSessions.pop(); // keep last 20
+            
+            localStorage.setItem('tasbeeh_saved_sessions', JSON.stringify(savedSessions));
+            renderSavedSessions();
+            showToast("تم حفظ الذكر في قائمة أذكاري");
+        };
+
+        function renderSavedSessions() {
+            if (!savedSessionsList) return;
+            if (savedSessions.length === 0) {
+                savedSessionsList.innerHTML = `<p class="text-xs text-gray-500 text-center py-4">لا توجد أذكار محفوظة بعد</p>`;
+                return;
+            }
+            
+            savedSessionsList.innerHTML = savedSessions.map((session, idx) => `
+                <div class="bg-[#1c2033] p-3 rounded-xl border border-gray-800 flex items-center justify-between">
+                    <button onclick="deleteSession(${idx})" class="text-gray-500 hover:text-red-400 text-xs ml-2">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <div class="text-right">
+                        <div class="text-sm font-bold text-indigo-300">${session.dhikr}</div>
+                        <div class="text-xs text-gray-400">العدد: <span class="text-white font-semibold">${session.count}</span> • ${session.date}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.deleteSession = function(index) {
+            savedSessions.splice(index, 1);
+            localStorage.setItem('tasbeeh_saved_sessions', JSON.stringify(savedSessions));
+            renderSavedSessions();
+            showToast("تم حذف العنصر");
+        };
+
+        window.openMenu = function() {
+            const menu = document.getElementById('side-menu');
+            const panel = document.getElementById('menu-panel');
+            if (menu) menu.classList.remove('hidden');
+            setTimeout(() => {
+                if (panel) panel.classList.remove('-translate-x-full');
+            }, 10);
+        };
+
+        window.closeMenu = function() {
+            const menu = document.getElementById('side-menu');
+            const panel = document.getElementById('menu-panel');
+            if (panel) panel.classList.add('-translate-x-full');
+            setTimeout(() => {
+                if (menu) menu.classList.add('hidden');
+            }, 300);
+        };
+
+        let toastTimer;
+        function showToast(message) {
+            if (!toast || !toastMsg) return;
+            toastMsg.textContent = message;
+            toast.style.opacity = '1';
+            
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
